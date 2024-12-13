@@ -91,7 +91,7 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
             Container(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xC92010FF)
+                  backgroundColor: Color.fromRGBO(89, 83, 141, 1)
                 ),
                 onPressed: (){},
                 child: Text('Submit Complaint', style: TextStyle(color: Colors.white),),
