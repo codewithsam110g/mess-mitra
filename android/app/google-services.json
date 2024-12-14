@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "354201131867",
+    "firebase_url": "https://mess-mitra-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "mess-mitra",
+    "storage_bucket": "mess-mitra.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354201131867:android:24bca07f941da49dd1587e",
+        "android_client_info": {
+          "package_name": "com.codewithsam110g.messmitra"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "354201131867-n10b0gb6isg7jukcdhuvvpqtr2v7b568.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.codewithsam110g.messmitra",
+            "certificate_hash": "dfbee99b38b57a105352bf02b83ab13f5c42ed1a"
+          }
+        },
+        {
+          "client_id": "354201131867-9i0u1st1dssrjls4gka8vri4om3fctig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQ-ixx6d5Ublw6B4TYquvFDz3hdXfOUEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "354201131867-9i0u1st1dssrjls4gka8vri4om3fctig.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

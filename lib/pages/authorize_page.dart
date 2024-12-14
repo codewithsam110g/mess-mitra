@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mess_mate/home_page.dart';
+import 'package:mess_mate/pages/home_page.dart';
 
 class Authorizepage extends StatefulWidget {
   const Authorizepage({super.key});
