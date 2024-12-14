@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mess_mate/pages/show_complaints.dart';
 import 'package:mess_mate/objects/complaint.dart'; // Adjust this import based on your project structure
 
@@ -10,18 +11,29 @@ class GlobalComplaints extends StatefulWidget {
 }
 
 class _GlobalComplaintsState extends State<GlobalComplaints> with SingleTickerProviderStateMixin {
-  late Future<Map<String, List<Complaint>>> complaintsByCategoryFuture;
+  late Future<Map<String, Map<String, List<Complaint>>>> complaintsByCategoryFuture;
 
-  // Fetch complaints from Firebase and group them by category
-  Future<Map<String, List<Complaint>>> _fetchComplaintsByCategory() async {
+  // Fetch complaints, group by category, then by date
+  Future<Map<String, Map<String, List<Complaint>>>> _fetchComplaintsByCategoryAndDate() async {
     final complaints = await Complaint.getAllComplaints();
-    final Map<String, List<Complaint>> groupedComplaints = {};
+
+    // Sort complaints by time (latest first)
+    complaints.sort((a, b) => DateTime.parse(b.raisedAt).compareTo(DateTime.parse(a.raisedAt)));
+
+    final Map<String, Map<String, List<Complaint>>> groupedComplaints = {};
 
     for (var complaint in complaints) {
+      // Group by category
       if (!groupedComplaints.containsKey(complaint.category)) {
-        groupedComplaints[complaint.category] = [];
+        groupedComplaints[complaint.category] = {};
       }
-      groupedComplaints[complaint.category]?.add(complaint);
+
+      // Group by date (formatted as "yyyy-MM-dd")
+      final dateKey = DateFormat('yyyy-MM-dd').format(DateTime.parse(complaint.raisedAt));
+      if (!groupedComplaints[complaint.category]!.containsKey(dateKey)) {
+        groupedComplaints[complaint.category]![dateKey] = [];
+      }
+      groupedComplaints[complaint.category]![dateKey]!.add(complaint);
     }
 
     return groupedComplaints;
@@ -30,7 +42,7 @@ class _GlobalComplaintsState extends State<GlobalComplaints> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    complaintsByCategoryFuture = _fetchComplaintsByCategory();
+    complaintsByCategoryFuture = _fetchComplaintsByCategoryAndDate();
   }
 
   @override
@@ -45,7 +57,7 @@ class _GlobalComplaintsState extends State<GlobalComplaints> with SingleTickerPr
         centerTitle: true,
         backgroundColor: const Color.fromRGBO(89, 83, 141, 1),
       ),
-      body: FutureBuilder<Map<String, List<Complaint>>>(
+      body: FutureBuilder<Map<String, Map<String, List<Complaint>>>>(
         future: complaintsByCategoryFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -70,6 +82,7 @@ class _GlobalComplaintsState extends State<GlobalComplaints> with SingleTickerPr
 
           return ListView(
             children: complaintsByCategory.keys.map((category) {
+              final complaintsByDate = complaintsByCategory[category]!;
               return Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Card(
@@ -84,16 +97,42 @@ class _GlobalComplaintsState extends State<GlobalComplaints> with SingleTickerPr
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    children: complaintsByCategory[category]!
-                        .map(
-                          (complaint) => ComplaintWidget(
-                            title: complaint.title,
-                            date: complaint.description, // Replace with complaint.date if available
-                            isChild: true,
-                            complaint: complaint,
+                    children: complaintsByDate.keys.map((date) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Date Divider
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromRGBO(230, 230, 250, 1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  DateFormat('dd MMM yyyy').format(DateTime.parse(date)),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        )
-                        .toList(),
+                          // Complaints under this date
+                          ...complaintsByDate[date]!.map(
+                            (complaint) => ComplaintWidget(
+                              title: complaint.title,
+                              date: DateFormat('hh:mm a').format(DateTime.parse(complaint.raisedAt)),
+                              isChild: true,
+                              complaint: complaint,
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ),
                 ),
               );
@@ -104,7 +143,6 @@ class _GlobalComplaintsState extends State<GlobalComplaints> with SingleTickerPr
     );
   }
 }
-
 class ComplaintWidget extends StatelessWidget {
   final String title;
   final String date;
@@ -163,6 +201,23 @@ class ComplaintWidget extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min, // To prevent excessive width
           children: [
+            // Support count with an icon
+            Row(
+              children: [
+                const Icon(
+                  Icons.person, // Support icon
+                  size: 20,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${complaint.supportCount}', // Display support count
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12), // Space between support and status
+            // Status indicator
             Container(
               height: 12,
               width: 12,

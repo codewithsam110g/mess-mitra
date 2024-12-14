@@ -45,6 +45,27 @@ class User {
       accountType: map['accountType'] ?? '',
     );
   }
+
+  // Factory constructor to create a User object with basic fields
+  factory User.createUser({
+    required String userId,
+    required String firstname,
+    required String middlename,
+    required String lastname,
+    required String email,
+    required String loginType,
+    required String accountType,
+  }) {
+    return User(
+      userId: userId,
+      firstname: firstname,
+      middlename: middlename,
+      lastname: lastname,
+      email: email,
+      loginType: loginType,
+      accountType: accountType,
+    );
+  }
 }
 
 // Functions to interact with Firebase Realtime Database

@@ -6,54 +6,71 @@ import 'package:mess_mate/pages/home/my_complaints.dart';
 import 'package:mess_mate/pages/home/raise_complaint.dart';
 import 'package:mess_mate/pages/profile.dart';
 import 'package:mess_mate/pages/info.dart';
-import 'package:mess_mate/pages/example.dart';
-import 'package:mess_mate/auth/auth.dart';
+import 'package:mess_mate/objects/user.dart' as _User;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
-
+  _User.User? u;
+  bool isLoading = true;
   final List<Widget> _pages = [
     const HomePageContent(), // Card-based content for Home Page
-    Example(),
+    const InfoPage(),
     const ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    getUser();
+  }
+
+  void getUser() async {
+    String? email = FirebaseAuth.instance.currentUser?.email;
+    _User.UserService us = _User.UserService();
+    _User.User? _u = await us.fetchUserByEmail(email ?? "");
+    setState(() {
+      u = _u;
+      isLoading = false;
+    });
+  }
 
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
+
   }
 
   @override
   Widget build(BuildContext context) {
+    print(u?.accountType);
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(
               Icons.home,
               size: 32,
             ),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.info,
-              size: 32,
+            const BottomNavigationBarItem(
+              icon: Icon(
+                Icons.info,
+                size: 32,
+              ),
+              label: 'Info',
             ),
-            label: 'Info',
-          ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(
               Icons.person,
               size: 32,

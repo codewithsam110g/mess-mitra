@@ -11,22 +11,31 @@ class MyComplaints extends StatefulWidget {
 }
 
 class _MyComplaintsState extends State<MyComplaints> {
-  late Future<List<Complaint>> myComplaintsFuture;
+  late Future<Map<String, List<Complaint>>> complaintsFuture;
 
-  // Fetch complaints raised by the current user
-  Future<List<Complaint>> _fetchMyComplaints() async {
+  // Fetch complaints raised by the user and those assigned to the user
+  Future<Map<String, List<Complaint>>> _fetchComplaints() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       throw Exception("User not logged in");
     }
 
-    return await Complaint.filterComplaints(raisedBy: user.uid);
+    // Fetch complaints raised by the user
+    final raisedComplaints = await Complaint.filterComplaints(raisedBy: user.uid);
+
+    // Fetch complaints assigned to the user
+    final assignedComplaints = await Complaint.filterComplaints(assignedTo: user.uid);
+
+    return {
+      'myComplaints': raisedComplaints,
+      'takenIssues': assignedComplaints,
+    };
   }
 
   @override
   void initState() {
     super.initState();
-    myComplaintsFuture = _fetchMyComplaints();
+    complaintsFuture = _fetchComplaints();
   }
 
   @override
@@ -43,8 +52,8 @@ class _MyComplaintsState extends State<MyComplaints> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: FutureBuilder<List<Complaint>>(
-          future: myComplaintsFuture,
+        child: FutureBuilder<Map<String, List<Complaint>>>(
+          future: complaintsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -54,27 +63,51 @@ class _MyComplaintsState extends State<MyComplaints> {
                 child: Text('Error: ${snapshot.error}'),
               );
             }
-            final complaints = snapshot.data ?? [];
-            if (complaints.isEmpty) {
+
+            final data = snapshot.data ?? {};
+            final myComplaints = data['myComplaints'] ?? [];
+            final takenIssues = data['takenIssues'] ?? [];
+
+            if (myComplaints.isEmpty && takenIssues.isEmpty) {
               return const Center(
                 child: Text(
-                  'No complaints raised yet!',
+                  'No activity found!',
                   style: TextStyle(fontSize: 18, color: Colors.black54),
                 ),
               );
             }
 
-            return ListView.builder(
-              itemCount: complaints.length,
-              itemBuilder: (context, index) {
-                final complaint = complaints[index];
-                return ComplaintWidget(
-                  title: complaint.title,
-                  date: complaint
-                      .description, // Replace with complaint.date if available
-                  complaint: complaint,
-                );
-              },
+            return ListView(
+              children: [
+                // Section 1: My Complaints
+                if (myComplaints.isNotEmpty) ...[
+                  const Text(
+                    'My Complaints',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ...myComplaints.map((complaint) => ComplaintWidget(
+                        title: complaint.title,
+                        date: complaint.description, // Replace with complaint.date if available
+                        complaint: complaint,
+                      )),
+                  const SizedBox(height: 16),
+                ],
+
+                // Section 2: Taken Issues
+                if (takenIssues.isNotEmpty) ...[
+                  const Text(
+                    'Taken Issues',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ...takenIssues.map((complaint) => ComplaintWidget(
+                        title: complaint.title,
+                        date: complaint.description, // Replace with complaint.date if available
+                        complaint: complaint,
+                      )),
+                ],
+              ],
             );
           },
         ),
@@ -107,7 +140,7 @@ class ComplaintWidget extends StatelessWidget {
             ),
           );
         },
-        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         tileColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -123,6 +156,22 @@ class ComplaintWidget extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Display support count with icon
+            Row(
+              children: [
+                const Icon(
+                  Icons.person, // Icon for support count
+                  size: 16,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 4), // Spacing between icon and text
+                Text(
+                  '${complaint.supportCount}', // Display support count
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(width: 16), // Spacing between support count and status
             // Filled circle for status color
             Container(
               width: 12,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:mess_mate/auth/auth.dart';
+import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -13,6 +14,35 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final DatabaseReference _userRef = FirebaseDatabase.instance.ref();
   Map<String, dynamic>? userData;
+
+  void _launchURL(BuildContext context) async {
+    final theme = Theme.of(context);
+    try {
+      await launchUrl(
+        Uri.parse('https://forms.gle/7ax7rbdRHiVY2cqL7'),
+        customTabsOptions: CustomTabsOptions(
+          colorSchemes: CustomTabsColorSchemes.defaults(
+            toolbarColor: theme.colorScheme.surface,
+          ),
+          shareState: CustomTabsShareState.on,
+          urlBarHidingEnabled: true,
+          showTitle: true,
+          closeButton: CustomTabsCloseButton(
+            icon: CustomTabsCloseButtonIcons.back,
+          ),
+        ),
+        safariVCOptions: SafariViewControllerOptions(
+          preferredBarTintColor: theme.colorScheme.surface,
+          preferredControlTintColor: theme.colorScheme.onSurface,
+          barCollapsingEnabled: true,
+          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
+        ),
+      );
+    } catch (e) {
+      // If the URL launch fails, an exception will be thrown. (For example, if no browser app is installed on the Android device.)
+      debugPrint(e.toString());
+    }
+  }
 
   @override
   void initState() {
@@ -36,7 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final photoUrl = user?.photoURL;
-
+  
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -77,15 +107,31 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildInfoCard('Login Type', userData?['loginType']),
                   _buildInfoCard('Account Type', userData?['accountType']),
                   const SizedBox(height: 16),
+                  // Mess Feedback Button (Visible only for students or MR)
+                  if (userData?['accountType'] == 'student' || userData?['accountType'] == 'mr')
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          child: const Text("Mess Feedback"),
+                          onPressed: () {
+                            _launchURL(context);
+                          },
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                          child: Text("Logout"),
-                          onPressed: () {
-                            GoogleSignInProvider().logout();
-                          }),
+                        child: const Text("Logout"),
+                        onPressed: () {
+                          GoogleSignInProvider().logout();
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -93,6 +139,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
     );
   }
+
 
   Widget _buildInfoCard(String title, String? value) {
     return Card(

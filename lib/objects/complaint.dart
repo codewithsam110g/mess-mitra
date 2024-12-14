@@ -10,6 +10,10 @@ class Complaint {
   List<String> imageLinks;
   int status;
   String raisedBy;
+  String raisedAt;
+  String assignedTo;
+  String reason;
+  int supportCount;
 
   Complaint({
     required this.complaintId,
@@ -20,6 +24,10 @@ class Complaint {
     required this.imageLinks,
     required this.status,
     required this.raisedBy,
+    required this.raisedAt,
+    required this.supportCount,
+    required this.assignedTo,
+    required this.reason,
   });
 
   // Factory constructor to create a new complaint with a UUID
@@ -41,6 +49,10 @@ class Complaint {
       imageLinks: imageLinks ?? [],
       status: status,
       raisedBy: raisedBy,
+      raisedAt: DateTime.now().toIso8601String(),
+      supportCount: 1,
+      assignedTo: "",
+      reason:"",
     );
   }
 
@@ -55,6 +67,10 @@ class Complaint {
       'imageLinks': imageLinks,
       'status': status,
       'raisedBy': raisedBy,
+      'assignedTo': assignedTo,
+      'raisedAt': raisedAt,
+      'reason': reason,
+      'supportCount': supportCount,
     };
   }
 
@@ -69,6 +85,10 @@ class Complaint {
       imageLinks: List<String>.from(map['imageLinks'] ?? []),
       status: map['status'] ?? 0,
       raisedBy: map['raisedBy'] ?? '',
+      assignedTo: map['assignedTo'] ?? '',
+      reason: map['reason'] ?? '',
+      raisedAt: map['raisedAt'] ?? DateTime.now().toIso8601String(),
+      supportCount: map['supportCount'] ?? 0,
     );
   }
 
@@ -133,41 +153,47 @@ class Complaint {
     int? status,
     String? category,
     String? raisedBy,
+    String? assignedTo, // New filter parameter
   }) async {
     final snapshot = await databaseRef.get();
     if (snapshot.exists) {
       final complaints = <Complaint>[];
-
+  
       // Cast the Firebase data to Map<String, dynamic>
       final data =
           Map<String, dynamic>.from(snapshot.value as Map<Object?, Object?>);
-
+  
       data.forEach((id, value) {
         if (value is Map<Object?, Object?>) {
           final complaintData = value['complaint'] as Map<Object?, Object?>?;
           if (complaintData != null) {
             final complaint =
                 Complaint.fromMap(Map<String, dynamic>.from(complaintData));
-
+  
             // Apply filters
             final messMatch = mess == null || complaint.mess == mess;
             final statusMatch = status == null || complaint.status == status;
-            final categoryMatch =
-                category == null || complaint.category == category;
-            final raisedByMatch =
-                raisedBy == null || complaint.raisedBy == raisedBy;
-
-            if (messMatch && statusMatch && categoryMatch && raisedByMatch) {
+            final categoryMatch = category == null || complaint.category == category;
+            final raisedByMatch = raisedBy == null || complaint.raisedBy == raisedBy;
+            final assignedToMatch =
+                assignedTo == null || complaint.assignedTo == assignedTo; // New filter logic
+  
+            if (messMatch &&
+                statusMatch &&
+                categoryMatch &&
+                raisedByMatch &&
+                assignedToMatch) {
               complaints.add(complaint);
             }
           }
         }
       });
-
+  
       return complaints;
     }
     return [];
   }
+
 
   String getStatusLabel() {
     switch (status) {

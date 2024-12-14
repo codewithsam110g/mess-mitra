@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pie_chart/pie_chart.dart';
+import 'package:mess_mate/objects/complaint.dart';  // Import your Complaint class
 
 class StatusPage extends StatefulWidget {
   const StatusPage({super.key});
@@ -9,87 +10,71 @@ class StatusPage extends StatefulWidget {
 }
 
 class _StatusPageState extends State<StatusPage> {
-  final List<Map<String, dynamic>> categories = [
-    {
-      "title": "Neatness of surroundings",
-      "subtitle": "Cleanliness issues",
-      "data": {
-        "Opened": 3.0,
-        "In Progress": 2.0,
-        "Solved": 5.0,
-        "Unsolved": 1.0,
-      }
-    },
-    {
-      "title": "Timeliness of services",
-      "subtitle": "Delays in service",
-      "data": {
-        "Opened": 2.0,
-        "In Progress": 1.0,
-        "Solved": 6.0,
-        "Unsolved": 0.0,
-      }
-    },
-    {
-      "title": "Quantity",
-      "subtitle": "Portion size issues",
-      "data": {
-        "Opened": 4.0,
-        "In Progress": 0.0,
-        "Solved": 3.0,
-        "Unsolved": 2.0,
-      }
-    },
-    {
-      "title": "Quality",
-      "subtitle": "Food quality complaints",
-      "data": {
-        "Opened": 1.0,
-        "In Progress": 3.0,
-        "Solved": 4.0,
-        "Unsolved": 2.0,
-      }
-    },
-    {
-      "title": "Taste",
-      "subtitle": "Taste-related feedback",
-      "data": {
-        "Opened": 0.0,
-        "In Progress": 1.0,
-        "Solved": 8.0,
-        "Unsolved": 1.0,
-      }
-    },
-  ];
+  List<Complaint> complaints = [];
+  bool isLoading = true;
+  Map<int, bool> isExpanded = {};  // Track expanded state for each category
 
-  final Map<int, bool> isExpanded = {};
+  // Function to group complaints by category and status
+  Map<String, Map<String, double>> groupComplaintsByCategory(List<Complaint> complaints) {
+    Map<String, Map<String, double>> categoryData = {};
+
+    for (var complaint in complaints) {
+      String category = complaint.category;
+      String statusLabel = complaint.getStatusLabel();
+
+      // If the category doesn't exist in the map, initialize it
+      if (!categoryData.containsKey(category)) {
+        categoryData[category] = {
+          "Created": 0.0,
+          "In Progress": 0.0,
+          "Solved": 0.0,
+          "Unsolved": 0.0,
+        };
+      }
+
+      // Increment the count of the respective status
+      categoryData[category]![statusLabel] = categoryData[category]![statusLabel]! + 1;
+    }
+
+    return categoryData;
+  }
+
+  // Fetch data from Firebase
+  Future<void> fetchComplaints() async {
+    try {
+      List<Complaint> fetchedComplaints = await Complaint.getAllComplaints();
+      setState(() {
+        complaints = fetchedComplaints;
+        isLoading = false;
+      });
+    } catch (e) {
+      // Handle errors here
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchComplaints(); // Fetch complaints from Firebase on page load
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Calculate totals for the "Total" category
-    final Map<String, double> totalData = {
-      "Opened": 0.0,
-      "In Progress": 0.0,
-      "Solved": 0.0,
-      "Unsolved": 0.0,
-    };
-
-    for (var category in categories) {
-      (category["data"] as Map<String, double>).forEach((key, value) {
-        totalData[key] = totalData[key]! + value;
-      });
-    }
-
-    // Total count of issues
-    final double totalCount = totalData.values.reduce((a, b) => a + b);
+    // Group complaints by category and status
+    final Map<String, Map<String, double>> categorizedData = groupComplaintsByCategory(complaints);
 
     // Define chart colors
     final Map<String, Color> colorMap = {
-      "Opened": Colors.grey,
+      "Created": Colors.grey,
       "In Progress": Colors.orange,
       "Solved": Colors.green,
       "Unsolved": Colors.red,
     };
+
+    final categories = categorizedData.entries.toList();
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(199, 194, 245, 1),
@@ -101,150 +86,93 @@ class _StatusPageState extends State<StatusPage> {
         centerTitle: true,
         backgroundColor: const Color.fromRGBO(89, 83, 141, 1),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 64),
-        child: Column(
-          children: [
-            // Total Widget
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const Text(
-                      "Total Issues Summary",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 200,
-                      child: PieChart(
-                        dataMap: totalData,
-                        colorList: colorMap.values.toList(),
-                        chartType: ChartType.disc,
-                        chartRadius: MediaQuery.of(context).size.width / 3,
-                        legendOptions: const LegendOptions(
-                          showLegends: true,
-                          legendPosition: LegendPosition.right,
-                        ),
-                        chartValuesOptions: const ChartValuesOptions(
-                          showChartValues: true,
-                          showChartValuesInPercentage: false,
-                          decimalPlaces: 0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Total Issues: ${totalCount.toInt()}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Individual Categories
-            ...categories.asMap().entries.map((entry) {
-              final index = entry.key;
-              final category = entry.value;
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())  // Show loading indicator
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 64),
+              child: Column(
+                children: List.generate(categories.length, (index) {
+                  final entry = categories[index];
+                  final category = entry.key;
+                  final data = entry.value;
 
-              // Total count for individual categories
-              final double categoryTotal =
-                  (category["data"] as Map<String, double>)
-                      .values
-                      .reduce((a, b) => a + b);
+                  // Total count for this category
+                  final double categoryTotal = data.values.reduce((a, b) => a + b);
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      // Title and toggle button
-                      ListTile(
-                        title: Text(
-                          category["title"],
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                        subtitle: Text(
-                          category["subtitle"],
-                          style:
-                              const TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(
-                            isExpanded[index] == true
-                                ? Icons.keyboard_arrow_up
-                                : Icons.keyboard_arrow_down,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              isExpanded[index] =
-                                  !(isExpanded[index] ?? false);
-                            });
-                          },
-                        ),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      // Pie chart (visible only when expanded)
-                      if (isExpanded[index] == true)
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: SizedBox(
-                            height: 200,
-                            child: PieChart(
-                              dataMap: Map<String, double>.from(
-                                  category["data"]),
-                              colorList: colorMap.values.toList(),
-                              chartType: ChartType.disc,
-                              chartRadius:
-                                  MediaQuery.of(context).size.width / 3,
-                              legendOptions: const LegendOptions(
-                                showLegends: true,
-                                legendPosition: LegendPosition.right,
+                      child: Column(
+                        children: [
+                          // Category title with dropdown toggle
+                          ListTile(
+                            title: Text(
+                              category,
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            subtitle: const Text(
+                              "Status of complaints",
+                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                isExpanded[index] == true
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
                               ),
-                              chartValuesOptions: const ChartValuesOptions(
-                                showChartValues: true,
-                                showChartValuesInPercentage: false,
-                                decimalPlaces: 0,
+                              onPressed: () {
+                                setState(() {
+                                  isExpanded[index] = !(isExpanded[index] ?? false);
+                                });
+                              },
+                            ),
+                          ),
+                          // Pie Chart and details (visible only when expanded)
+                          if (isExpanded[index] == true)
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: SizedBox(
+                                height: 200,
+                                child: PieChart(
+                                  dataMap: data,
+                                  colorList: colorMap.values.toList(),
+                                  chartType: ChartType.disc,
+                                  chartRadius: MediaQuery.of(context).size.width / 3,
+                                  legendOptions: const LegendOptions(
+                                    showLegends: true,
+                                    legendPosition: LegendPosition.right,
+                                  ),
+                                  chartValuesOptions: const ChartValuesOptions(
+                                    showChartValues: true,
+                                    showChartValuesInPercentage: false,
+                                    decimalPlaces: 0,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          // Total issues text (always visible)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: Text(
+                              "Total Issues: ${categoryTotal.toInt()}",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
                             ),
                           ),
-                        ),
-                      // Total issues text
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Text(
-                          "Total Issues: ${categoryTotal.toInt()}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ],
-        ),
-      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
     );
   }
 }

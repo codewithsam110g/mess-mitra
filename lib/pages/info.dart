@@ -29,7 +29,7 @@ class _InfoPageState extends State<InfoPage> {
         _mcorUsers = data.entries
             .where((entry) {
               final user = Map<String, dynamic>.from(entry.value['user'] ?? {});
-              return user['accountType'] == 'student';
+              return user['accountType'] == 'mcor';
             })
             .map((entry) {
               final user = Map<String, dynamic>.from(entry.value['user'] ?? {});

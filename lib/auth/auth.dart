@@ -3,11 +3,54 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:mess_mate/objects/user.dart' as _User;
 
 class GoogleSignInProvider extends ChangeNotifier {
   final googleSignIn = GoogleSignIn();
   GoogleSignInAccount? _user;
   GoogleSignInAccount get user => _user!;
+
+  void emailLogin(String email, String password) async {
+    try {
+      final credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        print('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        print('Wrong password provided for that user.');
+      }
+    }
+  }
+
+  // void emailSignup(String email, String password) async {
+  //   try {
+  //     final credential =
+  //         await FirebaseAuth.instance.createUserWithEmailAndPassword(
+  //       email: email,
+  //       password: password,
+  //     );
+  //     _User.UserService us = _User.UserService();
+  //     _User.User u = _User.User.createUser(
+  //       accountType:"mcom",
+  //       email:email,
+  //       firstname:"Matangi",
+  //       middlename:"Santhosh",
+  //       lastname:"Babu",
+  //       loginType:"email",
+  //       userId:credential.user?.uid??""
+  //     );
+  //     us.createUser(u);
+  //   } on FirebaseAuthException catch (e) {
+  //     if (e.code == 'weak-password') {
+  //       print('The password provided is too weak.');
+  //     } else if (e.code == 'email-already-in-use') {
+  //       print('The account already exists for that email.');
+  //     }
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  // }
 
   Future googleLogin(BuildContext context) async {
     try {
@@ -67,7 +110,6 @@ class GoogleSignInProvider extends ChangeNotifier {
 
         await userRef.set(userMap);
       }
-
       Fluttertoast.showToast(
         msg: "Login successful.",
         toastLength: Toast.LENGTH_SHORT,
