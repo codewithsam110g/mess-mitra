@@ -3,14 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:mess_mate/objects/complaint.dart'; // Ensure this import path is correct
 import 'package:mess_mate/pages/show_complaints.dart';
 
-class GlobalComplaints extends StatefulWidget {
-  const GlobalComplaints({super.key});
+class HomePageContent extends StatefulWidget {
+  const HomePageContent({super.key});
 
   @override
-  State<GlobalComplaints> createState() => _GlobalComplaintsState();
+  State<HomePageContent> createState() => _HomePageContentState();
 }
 
-class _GlobalComplaintsState extends State<GlobalComplaints> {
+class _HomePageContentState extends State<HomePageContent> {
   late Future<Map<String, Map<String, List<Complaint>>>>
       complaintsByCategoryFuture;
 

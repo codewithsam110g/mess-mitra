@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
-import 'package:mess_mate/objects/complaint.dart'; // Assuming you have this file
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mess_mate/objects/complaint.dart';
 import 'package:mess_mate/objects/user.dart' as _User;
 
 class ShowComplaint extends StatefulWidget {
@@ -36,6 +36,7 @@ class _ShowComplaintState extends State<ShowComplaint> {
 
   late String currentUserUid;
   late String accountType = "";
+
   @override
   void initState() {
     super.initState();
@@ -59,24 +60,25 @@ class _ShowComplaintState extends State<ShowComplaint> {
       widget.complaint.status = 0; // Reset status to "Created"
       widget.complaint.assignedTo = ""; // Clear assigned user
       widget.complaint.reason = ""; // Clear the reason (if needed)
-  
+
       // Update the complaint in the database
-      Complaint.updateComplaint(widget.complaint.complaintId, widget.complaint.toMap());
+      Complaint.updateComplaint(
+          widget.complaint.complaintId, widget.complaint.toMap());
     });
-  
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Complaint re-raised successfully!')),
     );
   }
 
-  
   void _handleChangeStatus(int status, String reason) {
     setState(() {
       widget.complaint.status = status; // Update complaint status
       widget.complaint.reason = reason; // Save the provided reason
 
       // Update the complaint in the database
-      Complaint.updateComplaint(widget.complaint.complaintId, widget.complaint.toMap());
+      Complaint.updateComplaint(
+          widget.complaint.complaintId, widget.complaint.toMap());
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -88,14 +90,14 @@ class _ShowComplaintState extends State<ShowComplaint> {
     );
   }
 
-
   void _handleTakeAction() {
     setState(() {
       widget.complaint.status = 1; // "In Progress" status
       widget.complaint.assignedTo = currentUserUid; // Assign complaint
 
       // Update the complaint in the database
-      Complaint.updateComplaint(widget.complaint.complaintId, widget.complaint.toMap());
+      Complaint.updateComplaint(
+          widget.complaint.complaintId, widget.complaint.toMap());
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -103,300 +105,283 @@ class _ShowComplaintState extends State<ShowComplaint> {
     );
   }
 
-  void _showChangeStatusDialog() {
-    final TextEditingController reasonController = TextEditingController();
-    int? selectedStatus; // Variable to track selected status
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Change Complaint Status',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setDialogState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Select a new status for the complaint and provide a reason.',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  RadioListTile<int>(
-                    title: const Text('Solved'),
-                    value: 2,
-                    groupValue: selectedStatus,
-                    onChanged: (int? value) {
-                      setDialogState(() {
-                        selectedStatus = value; // Update selectedStatus
-                      });
-                    },
-                  ),
-                  RadioListTile<int>(
-                    title: const Text('Unsolved'),
-                    value: 3,
-                    groupValue: selectedStatus,
-                    onChanged: (int? value) {
-                      setDialogState(() {
-                        selectedStatus = value; // Update selectedStatus
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: reasonController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: 'Reason',
-                      hintText: 'Provide a reason for this status change',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (selectedStatus == null || reasonController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please select a status and provide a reason.'),
-                    ),
-                  );
-                  return;
-                }
-                Navigator.of(context).pop(); // Close the dialog
-                _handleChangeStatus(selectedStatus!, reasonController.text);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-              ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-
   @override
   Widget build(BuildContext context) {
     final complaintStatus = statusInfo[widget.complaint.status] ??
         {'label': 'Unknown', 'color': Colors.black};
 
-    // Ensure the user data is fetched
-    setData();
-
     // Determine if the current user raised the complaint
-    bool isCurrentUser = (widget.complaint.raisedBy == currentUserUid) ||
-        (accountType == 'mcor' || accountType == 'mcom');
-
-    // Check if the complaint is assigned to the current user
     bool isAssignedToCurrentUser =
         widget.complaint.assignedTo == currentUserUid;
 
-    // Check if the status is "In Progress"
-    bool isInProgress = widget.complaint.status == 1;
-
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(199, 194, 245, 1),
-      appBar: AppBar(
-        title: const Text(
-          'Complaint Details',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color.fromRGBO(89, 83, 141, 1),
-        elevation: 5,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 2,
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+      backgroundColor: Colors.blueAccent,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const Text(
+                    "Complaint Info",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Complaint Title
-                Row(
-                  children: [
-                    Text('Complaint Title: ', style: headingStyle),
-                    Expanded(
-                        child:
-                            Text(widget.complaint.title, style: contentStyle)),
-                  ],
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
                 ),
-                const SizedBox(height: 8),
-
-                // Complaint Status
-                Row(
-                  children: [
-                    Text('Status: ', style: headingStyle),
-                    const SizedBox(width: 8),
-                    Container(
-                      height: 12,
-                      width: 12,
-                      decoration: BoxDecoration(
-                        color: complaintStatus['color'],
-                        shape: BoxShape.circle,
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFF), // Almost white with a very slight blue tint
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFE0E0E0), // Light border for elevation effect
+                        width: 1.5,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      complaintStatus['label'],
-                      style: contentStyle.copyWith(
-                        color: complaintStatus['color'],
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Divider
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: const Divider(
-                      height: 24, thickness: 1, color: Colors.grey),
-                ),
-
-                // Complaint Details
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text('Mess: ', style: headingStyle),
-                    Expanded(
-                        child:
-                            Text(widget.complaint.mess, style: contentStyle)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text('Category: ', style: headingStyle),
-                    Expanded(
-                        child:
-                            Text(widget.complaint.category, style: contentStyle)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                Text('Description', style: headingStyle),
-                const SizedBox(height: 8),
-                Text(
-                  widget.complaint.description,
-                  style: contentStyle,
-                ),
-                const SizedBox(height: 16),
-
-                // Complaint Images
-                Text('Images', style: headingStyle),
-                const SizedBox(height: 8),
-                widget.complaint.imageLinks.isEmpty
-                    ? Container(
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade400),
-                        ),
-                        child: const Center(
-                          child: Text('No images uploaded',
-                              style: TextStyle(color: Colors.grey)),
-                        ),
-                      )
-                    : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: widget.complaint.imageLinks
-                            .map(
-                              (image) => Container(
-                                height: 100,
-                                width: 100,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  image: DecorationImage(
-                                    image: NetworkImage(image),
-                                    fit: BoxFit.cover,
-                                  ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Complaint Title Section
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Complaint Title',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      widget.complaint.title,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                      overflow: TextOverflow.ellipsis, // Handle long titles gracefully
+                                    ),
+                                  ],
                                 ),
                               ),
-                            )
-                            .toList(),
-                      ),
-                const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // Handle support action here
+                                      setState(() {
+                                        widget.complaint.supportCount += 1; // Increment support count
+                                        // Update the complaint in the database
+                                        Complaint.updateComplaint(
+                                            widget.complaint.complaintId, widget.complaint.toMap());
+                                      });
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Support added successfully!')),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blueAccent, // Customize button color
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12), // Slightly rounded corners
+                                      ),
+                                    ),
+                                    child: const Text('Support', style: TextStyle(color:Colors.white)),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.person, size: 20, color: Colors.blue),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        widget.complaint.supportCount.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
 
-                // Conditionally Render the Button
-                if (accountType != "student")
-                  if (widget.complaint.status == 0) // Only show "Take" button if status is 0
-                    ElevatedButton(
-                      onPressed: () {
-                        _handleTakeAction(); // Handle the "Take" action
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+
+                          const Divider(height: 24, color: Colors.grey),
+            
+                          // Status
+                          const Text(
+                            'Status',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(
+                                height: 12,
+                                width: 12,
+                                decoration: BoxDecoration(
+                                  color: statusInfo[widget.complaint.status]?['color'] ?? Colors.black,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                statusInfo[widget.complaint.status]?['label'] ?? 'Unknown',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24, color: Colors.grey),
+            
+                          // Mess
+                          const Text(
+                            'Mess',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.complaint.mess,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const Divider(height: 24, color: Colors.grey),
+            
+                          // Category
+                          const Text(
+                            'Category',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.complaint.category,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const Divider(height: 24, color: Colors.grey),
+            
+                          // Description
+                          const Text(
+                            'Description',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.complaint.description,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.normal,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const Divider(height: 24, color: Colors.grey),
+            
+                          // Images
+                          const Text(
+                            'Images',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          widget.complaint.imageLinks.isEmpty
+                              ? Container(
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey.shade400),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'No images uploaded',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ),
+                                )
+                              : Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: widget.complaint.imageLinks
+                                      .map(
+                                        (image) => Container(
+                                          height: 100,
+                                          width: 100,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            image: DecorationImage(
+                                              image: NetworkImage(image),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                        ],
                       ),
-                      child: const Text(
-                        'Take',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    )
-                  else if (widget.complaint.status == 1 && isAssignedToCurrentUser)
-                    // Show "Change Status" button if status is 1 (In Progress) and assigned to the current user
-                    ElevatedButton(
-                      onPressed: () {
-                        _showChangeStatusDialog(); // Handle the "Change Status" action
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Change Status',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    )
-              ],
-            ),
-          ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+
+          ],
         ),
       ),
     );
