@@ -70,10 +70,15 @@ class _GlobalComplaintsState extends State<GlobalComplaints> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                      size: 28,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                     ),
                   ),
                   const Text(
@@ -122,7 +127,7 @@ class _GlobalComplaintsState extends State<GlobalComplaints> {
 
                     final categories = complaintsByCategory.keys.toList();
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical:24.0),
+                      padding: const EdgeInsets.symmetric(vertical: 24.0),
                       child: ListView.builder(
                         itemCount: categories.length,
                         itemBuilder: (context, index) {
@@ -269,9 +274,10 @@ class _GlobalComplaintsState extends State<GlobalComplaints> {
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                Text(_getStatusString(complaint.status),
+                                Text(
+                                  _getStatusString(complaint.status),
                                   style: TextStyle(
-                                    fontSize:14,
+                                    fontSize: 14,
                                   ),
                                 )
                               ],
@@ -290,8 +296,8 @@ class _GlobalComplaintsState extends State<GlobalComplaints> {
     );
   }
 
-  String _getStatusString(int status){
-    switch(status){
+  String _getStatusString(int status) {
+    switch (status) {
       case 0:
         return "Created";
       case 1:
@@ -300,6 +306,8 @@ class _GlobalComplaintsState extends State<GlobalComplaints> {
         return "Solved";
       case 3:
         return "Rejcted";
+      case 4:
+        return "Re Raised";
       default:
         return "Unknown";
     }
@@ -314,6 +322,8 @@ class _GlobalComplaintsState extends State<GlobalComplaints> {
       case 2:
         return Colors.green;
       case 3:
+        return Colors.red;
+      case 4:
         return Colors.red;
       default:
         return Colors.black;

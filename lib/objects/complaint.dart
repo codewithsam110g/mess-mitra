@@ -15,6 +15,14 @@ class Complaint {
   String reason;
   int supportCount;
 
+  String assignedAuthType;
+  String reRaiseReason;
+  String reassignedTo;
+  String mergeTo;
+  String mergeReason;
+  bool isReRaised;
+  String recloseReason;
+
   Complaint({
     required this.complaintId,
     required this.title,
@@ -28,9 +36,15 @@ class Complaint {
     required this.supportCount,
     required this.assignedTo,
     required this.reason,
+    this.assignedAuthType = "",
+    this.reRaiseReason = "",
+    this.reassignedTo = "",
+    this.mergeTo = "",
+    this.mergeReason = "",
+    this.isReRaised = false,
+    this.recloseReason = "",
   });
 
-  // Factory constructor to create a new complaint with a UUID
   factory Complaint.newComplaint({
     required String title,
     required String description,
@@ -52,7 +66,14 @@ class Complaint {
       raisedAt: DateTime.now().toIso8601String(),
       supportCount: 1,
       assignedTo: "",
-      reason:"",
+      reason: "",
+      assignedAuthType: "",
+      reRaiseReason: "",
+      reassignedTo: "",
+      mergeTo: "",
+      mergeReason: "",
+      isReRaised: false,
+      recloseReason: "",
     );
   }
 
@@ -71,6 +92,13 @@ class Complaint {
       'raisedAt': raisedAt,
       'reason': reason,
       'supportCount': supportCount,
+      'assignedAuthType': assignedAuthType,
+      'reRaiseReason': reRaiseReason,
+      'reassignedTo': reassignedTo,
+      'mergeTo': mergeTo,
+      'mergeReason': mergeReason,
+      'isReRaised': isReRaised,
+      'recloseReason': recloseReason,
     };
   }
 
@@ -89,6 +117,13 @@ class Complaint {
       reason: map['reason'] ?? '',
       raisedAt: map['raisedAt'] ?? DateTime.now().toIso8601String(),
       supportCount: map['supportCount'] ?? 0,
+      assignedAuthType: map['assignedAuthType'] ?? "",
+      reRaiseReason: map['reRaiseReason'] ?? "",
+      reassignedTo: map['reassignedTo'] ?? "",
+      mergeTo: map['mergeTo'] ?? "",
+      mergeReason: map['mergeReason'] ?? "",
+      isReRaised: map['isReRaised'] ?? false,
+      recloseReason: map['recloseReason'] ?? "",
     );
   }
 
@@ -147,48 +182,58 @@ class Complaint {
   static Future<void> deleteComplaint(String id) async {
     await databaseRef.child(id).remove();
   }
-
+  
+  
   static Future<List<Complaint>> filterComplaints({
     String? mess,
     int? status,
     String? category,
     String? raisedBy,
-    String? assignedTo, // New filter parameter
+    String? assignedTo,
+    bool? isReRaised, // New filter parameter for isReRaised
+    String? assignedAuthType, // New filter parameter for assignedAuthType
   }) async {
     final snapshot = await databaseRef.get();
     if (snapshot.exists) {
       final complaints = <Complaint>[];
-  
+
       // Cast the Firebase data to Map<String, dynamic>
       final data =
           Map<String, dynamic>.from(snapshot.value as Map<Object?, Object?>);
-  
+
       data.forEach((id, value) {
         if (value is Map<Object?, Object?>) {
           final complaintData = value['complaint'] as Map<Object?, Object?>?;
           if (complaintData != null) {
             final complaint =
                 Complaint.fromMap(Map<String, dynamic>.from(complaintData));
-  
+
             // Apply filters
             final messMatch = mess == null || complaint.mess == mess;
             final statusMatch = status == null || complaint.status == status;
-            final categoryMatch = category == null || complaint.category == category;
-            final raisedByMatch = raisedBy == null || complaint.raisedBy == raisedBy;
-            final assignedToMatch =
-                assignedTo == null || complaint.assignedTo == assignedTo; // New filter logic
-  
+            final categoryMatch =
+                category == null || complaint.category == category;
+            final raisedByMatch =
+                raisedBy == null || complaint.raisedBy == raisedBy;
+            final assignedToMatch = assignedTo == null ||
+                complaint.assignedTo == assignedTo;
+            final isReRaisedMatch = isReRaised == null || complaint.isReRaised == isReRaised; // New filter logic for isReRaised
+            final assignedAuthTypeMatch =
+                assignedAuthType == null || complaint.assignedAuthType == assignedAuthType; // New filter logic for assignedAuthType
+
             if (messMatch &&
                 statusMatch &&
                 categoryMatch &&
                 raisedByMatch &&
-                assignedToMatch) {
+                assignedToMatch &&
+                isReRaisedMatch &&
+                assignedAuthTypeMatch) {
               complaints.add(complaint);
             }
           }
         }
       });
-  
+
       return complaints;
     }
     return [];
@@ -205,6 +250,8 @@ class Complaint {
         return 'Solved';
       case 3:
         return 'Unsolved';
+      case 4:
+        return "Re Raised";
       default:
         return 'Unknown Status';
     }

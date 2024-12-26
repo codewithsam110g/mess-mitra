@@ -122,7 +122,7 @@ class _HomePageContentState extends State<HomePageContent> {
 
                     final categories = complaintsByCategory.keys.toList();
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical:24.0),
+                      padding: const EdgeInsets.symmetric(vertical: 24.0),
                       child: ListView.builder(
                         itemCount: categories.length,
                         itemBuilder: (context, index) {
@@ -269,9 +269,10 @@ class _HomePageContentState extends State<HomePageContent> {
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                Text(_getStatusString(complaint.status),
+                                Text(
+                                  _getStatusString(complaint.status),
                                   style: TextStyle(
-                                    fontSize:14,
+                                    fontSize: 14,
                                   ),
                                 )
                               ],
@@ -290,8 +291,8 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 
-  String _getStatusString(int status){
-    switch(status){
+  String _getStatusString(int status) {
+    switch (status) {
       case 0:
         return "Created";
       case 1:

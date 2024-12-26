@@ -1,8 +1,9 @@
-
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:mess_mate/objects/complaint.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mess_mate/objects/user.dart' as _User;
 
 class RaiseComplaints extends StatefulWidget {
   const RaiseComplaints({super.key});
@@ -18,9 +19,26 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  _User.User? u;
 
   bool _isTitleValid = true;
   bool _isDescriptionValid = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    getUserObject();
+  }
+
+  void getUserObject() async {
+    _User.UserService us = _User.UserService();
+    _User.User? user =
+        await us.fetchUserByUID(FirebaseAuth.instance.currentUser?.uid ?? "");
+    setState(() {
+      u = user;
+    });
+  }
 
   Future<void> _pickImage() async {
     if (_selectedImages.length >= 3) {
@@ -32,7 +50,6 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
 
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
       setState(() {
         _selectedImages.add(File(pickedFile.path));
@@ -43,9 +60,10 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
   void submitComplaint() {
     setState(() {
       // Validate inputs
-      _isTitleValid = titleController.text.isNotEmpty && titleController.text.length >= 5;
-      _isDescriptionValid =
-          descriptionController.text.isNotEmpty && descriptionController.text.length >= 10;
+      _isTitleValid =
+          titleController.text.isNotEmpty && titleController.text.length >= 5;
+      _isDescriptionValid = descriptionController.text.isNotEmpty &&
+          descriptionController.text.length >= 10;
     });
 
     if (_isTitleValid && _isDescriptionValid) {
@@ -58,26 +76,26 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
           imageLinks: [],
           status: 0,
           raisedBy: FirebaseAuth.instance.currentUser?.uid ?? "");
+      u!.complaintIds.add(c.complaintId);
+      _User.UserService().updateUser(u!);
       Complaint.createComplaint(c);
-
-      // Show success popup with auto-close
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          Future.delayed(const Duration(seconds: 3), () {
+          Future.delayed(const Duration(seconds: 1, milliseconds: 500), () {
             Navigator.of(context).pop(); // Close the popup
             Navigator.of(context).pop(); // Close the form
           });
           return AlertDialog(
             title: const Text('Complaint Submitted'),
-            content: const Text('Your complaint has been submitted successfully!'),
+            content:
+                const Text('Your complaint has been submitted successfully!'),
           );
         },
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +144,8 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
                                 // Title Input
                                 const Text(
                                   'Title',
-                                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
                                 TextField(
@@ -144,7 +163,8 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
                                 // Description Input
                                 const Text(
                                   'Description',
-                                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
                                 TextField(
@@ -163,7 +183,8 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
                                 // Mess Dropdown
                                 const Text(
                                   'Mess',
-                                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField(
@@ -172,12 +193,18 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
                                     border: OutlineInputBorder(),
                                   ),
                                   items: const [
-                                    DropdownMenuItem(value: 'DH1', child: Text('DH1')),
-                                    DropdownMenuItem(value: 'DH2', child: Text('DH2')),
-                                    DropdownMenuItem(value: 'DH3', child: Text('DH3')),
-                                    DropdownMenuItem(value: 'DH4', child: Text('DH4')),
-                                    DropdownMenuItem(value: 'DH5', child: Text('DH5')),
-                                    DropdownMenuItem(value: 'DH6', child: Text('DH6')),
+                                    DropdownMenuItem(
+                                        value: 'DH1', child: Text('DH1')),
+                                    DropdownMenuItem(
+                                        value: 'DH2', child: Text('DH2')),
+                                    DropdownMenuItem(
+                                        value: 'DH3', child: Text('DH3')),
+                                    DropdownMenuItem(
+                                        value: 'DH4', child: Text('DH4')),
+                                    DropdownMenuItem(
+                                        value: 'DH5', child: Text('DH5')),
+                                    DropdownMenuItem(
+                                        value: 'DH6', child: Text('DH6')),
                                   ],
                                   onChanged: (value) {
                                     setState(() {
@@ -190,7 +217,8 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
                                 // Category Dropdown
                                 const Text(
                                   'Category',
-                                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField(
@@ -231,7 +259,8 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
                                 // Images Section
                                 const Text(
                                   'Images',
-                                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
                                 Wrap(
@@ -280,8 +309,10 @@ class _RaiseComplaintsState extends State<RaiseComplaints> {
                                           height: 80,
                                           decoration: BoxDecoration(
                                             color: Colors.grey[200],
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border:
+                                                Border.all(color: Colors.grey),
                                           ),
                                           child: const Icon(
                                             Icons.add,

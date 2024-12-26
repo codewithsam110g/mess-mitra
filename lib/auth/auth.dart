@@ -14,43 +14,71 @@ class GoogleSignInProvider extends ChangeNotifier {
     try {
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
+          
+          Fluttertoast.showToast(
+            msg: "Logged In Successfully",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+          );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        print('No user found for that email.');
+        // Check for specific passwords and create the account.
+        if (password == 'mcom123' || password == 'mcor123') {
+          try {
+            // Create a new Firebase user.
+            final newCredential = await FirebaseAuth.instance
+                .createUserWithEmailAndPassword(email: email, password: password);
+
+            final userId = newCredential.user?.uid ?? "";
+
+            // Determine account type based on the password.
+            final accountType = password == 'mcom123' ? 'mcom' : 'mcor';
+
+            // Create the user object using _User.User and the UserService.
+            final _User.UserService userService = _User.UserService();
+            final _User.User user = _User.User.createUser(
+              accountType: accountType,
+              email: email,
+              firstname: "Complete", // Replace with actual data if available.
+              middlename: "Your", // Replace with actual data if available.
+              lastname: "Profile", // Replace with actual data if available.
+              loginType: "email",
+              userId: userId,
+              mess:"DH",
+              mobileno:"1231231321"
+            );
+
+            // Save the user object to the database using the UserService.
+            await userService.createUser(user);
+
+            Fluttertoast.showToast(
+              msg: "Account created successfully.",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+            );
+          } catch (creationError) {
+            Fluttertoast.showToast(
+              msg: "Failed to create account: ${creationError.toString()}",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+            );
+          }
+        } else {
+          Fluttertoast.showToast(
+            msg: "No user found for that email.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+          );
+        }
       } else if (e.code == 'wrong-password') {
-        print('Wrong password provided for that user.');
+        Fluttertoast.showToast(
+          msg: "Wrong password provided for that user.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
       }
     }
   }
-
-  // void emailSignup(String email, String password) async {
-  //   try {
-  //     final credential =
-  //         await FirebaseAuth.instance.createUserWithEmailAndPassword(
-  //       email: email,
-  //       password: password,
-  //     );
-  //     _User.UserService us = _User.UserService();
-  //     _User.User u = _User.User.createUser(
-  //       accountType:"mcom",
-  //       email:email,
-  //       firstname:"Matangi",
-  //       middlename:"Santhosh",
-  //       lastname:"Babu",
-  //       loginType:"email",
-  //       userId:credential.user?.uid??""
-  //     );
-  //     us.createUser(u);
-  //   } on FirebaseAuthException catch (e) {
-  //     if (e.code == 'weak-password') {
-  //       print('The password provided is too weak.');
-  //     } else if (e.code == 'email-already-in-use') {
-  //       print('The account already exists for that email.');
-  //     }
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  // }
 
   Future googleLogin(BuildContext context) async {
     try {
@@ -59,7 +87,7 @@ class GoogleSignInProvider extends ChangeNotifier {
 
       _user = googleUser;
 
-      if (!googleUser.email.contains("@rguktn.ac.in")) {
+      if (!googleUser.email.contains("@rgukt")) {
         await googleSignIn.disconnect();
         Fluttertoast.showToast(
           msg: "Please login with an RGUKT email.",

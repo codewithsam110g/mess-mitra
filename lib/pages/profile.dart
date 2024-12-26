@@ -12,164 +12,270 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final DatabaseReference _userRef = FirebaseDatabase.instance.ref();
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
   Map<String, dynamic>? userData;
+  String? feedbackUrl;
+  bool isEditing = false;
 
-  void _launchURL(BuildContext context) async {
-    final theme = Theme.of(context);
-    try {
-      await launchUrl(
-        Uri.parse('https://forms.gle/7ax7rbdRHiVY2cqL7'),
-        customTabsOptions: CustomTabsOptions(
-          colorSchemes: CustomTabsColorSchemes.defaults(
-            toolbarColor: theme.colorScheme.surface,
-          ),
-          shareState: CustomTabsShareState.on,
-          urlBarHidingEnabled: true,
-          showTitle: true,
-          closeButton: CustomTabsCloseButton(
-            icon: CustomTabsCloseButtonIcons.back,
-          ),
-        ),
-        safariVCOptions: SafariViewControllerOptions(
-          preferredBarTintColor: theme.colorScheme.surface,
-          preferredControlTintColor: theme.colorScheme.onSurface,
-          barCollapsingEnabled: true,
-          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
-        ),
-      );
-    } catch (e) {
-      // If the URL launch fails, an exception will be thrown. (For example, if no browser app is installed on the Android device.)
-      debugPrint(e.toString());
-    }
-  }
+  // Controllers for editable fields
+  final TextEditingController firstnameController = TextEditingController();
+  final TextEditingController middlenameController = TextEditingController();
+  final TextEditingController lastnameController = TextEditingController();
+  final TextEditingController messController = TextEditingController();
+  final TextEditingController mobilenoController = TextEditingController();
+  final TextEditingController accType = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchUserData();
+    fetchFeedbackUrl();
   }
 
   Future<void> fetchUserData() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    final snapshot = await _userRef.child('users/$userId/user').get();
+    final snapshot = await _dbRef.child('users/$userId/user').get();
     if (snapshot.exists) {
       setState(() {
         userData = Map<String, dynamic>.from(snapshot.value as Map);
+        firstnameController.text = userData?['firstname'] ?? '';
+        middlenameController.text = userData?['middlename'] ?? '';
+        lastnameController.text = userData?['lastname'] ?? '';
+        messController.text = userData?['mess'] ?? '';
+        mobilenoController.text = userData?['mobileno'] ?? '';
+        accType.text = userData?['accountType'] ?? '';
       });
     }
+  }
+
+  Future<void> fetchFeedbackUrl() async {
+    final snapshot = await _dbRef.child('MessFeedbackLink').get();
+    if (snapshot.exists) {
+      setState(() {
+        feedbackUrl = snapshot.value as String?;
+      });
+    }
+  }
+
+  Future<void> saveUserData() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final updatedData = {
+      'firstname': firstnameController.text,
+      'middlename': middlenameController.text,
+      'lastname': lastnameController.text,
+      'mess': messController.text,
+      'mobileno': mobilenoController.text,
+      'accountType':accType.text
+    };
+
+    await _dbRef.child('users/$userId/user').update(updatedData);
+
+    setState(() {
+      isEditing = false;
+      userData = {...?userData, ...updatedData};
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final photoUrl = user?.photoURL;
-  
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        centerTitle: true,
-      ),
-      body: userData == null
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+      backgroundColor: Colors.blueAccent,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Row(
                 children: [
-                  // Profile Image
-                  ClipOval(
-                    child: photoUrl != null
-                        ? Image.network(
-                            photoUrl,
-                            fit: BoxFit.cover,
-                            width: 100,
-                            height: 100,
-                          )
-                        : const CircleAvatar(
-                            radius: 50,
-                            child: Icon(
-                              Icons.person,
-                              size: 50,
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 16),
-                  // User Details in Card-based layout
-                  _buildInfoCard('First Name', userData?['firstname']),
-                  _buildInfoCard('Middle Name', userData?['middlename']),
-                  _buildInfoCard('Last Name', userData?['lastname']),
-                  _buildInfoCard('Email', userData?['email']),
-                  _buildInfoCard('Login Type', userData?['loginType']),
-                  _buildInfoCard('Account Type', userData?['accountType']),
-                  const SizedBox(height: 16),
-                  // Mess Feedback Button (Visible only for students or MR)
-                  if (userData?['accountType'] == 'student' || userData?['accountType'] == 'mr')
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          child: const Text("Mess Feedback"),
-                          onPressed: () {
-                            _launchURL(context);
-                          },
+                  const Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 32.0),
+                      child: Text(
+                        "Profile",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
                         ),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        child: const Text("Logout"),
-                        onPressed: () {
-                          GoogleSignInProvider().logout();
-                        },
-                      ),
-                    ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.exit_to_app, color: Colors.white),
+                    onPressed: () {
+                      GoogleSignInProvider().logout();
+                    },
+                  ),
+                  const SizedBox(width: 16)
                 ],
               ),
             ),
-    );
-  }
-
-
-  Widget _buildInfoCard(String title, String? value) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      elevation: 0, // No shadow or elevation
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        side: BorderSide(color: Colors.grey.shade300), // Subtle border
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
-        child: Row(
-          children: [
-            Text(
-              '$title:',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                value ?? 'N/A',
-                style: const TextStyle(fontSize: 16),
-                overflow: TextOverflow.ellipsis,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
+                ),
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFE0E0E0),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: userData == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ClipOval(
+                                      child: photoUrl != null
+                                          ? Image.network(
+                                              photoUrl,
+                                              fit: BoxFit.cover,
+                                              width: 100,
+                                              height: 100,
+                                            )
+                                          : const CircleAvatar(
+                                              radius: 50,
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 50,
+                                              ),
+                                            ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        isEditing ? Icons.save : Icons.edit,
+                                        color: Colors.blueAccent,
+                                      ),
+                                      onPressed: () {
+                                        if (isEditing) {
+                                          saveUserData();
+                                        } else {
+                                          setState(() {
+                                            isEditing = true;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildEditableRow(Icons.person, 'First Name',
+                                    firstnameController),
+                                _buildEditableRow(Icons.person_outline,
+                                    'Middle Name', middlenameController),
+                                _buildEditableRow(Icons.person, 'Last Name',
+                                    lastnameController),
+                                _buildEditableRow(Icons.restaurant, 'Mess',
+                                    messController),
+                                _buildEditableRow(Icons.phone, 'Mobile Number',
+                                    mobilenoController),
+                                _buildInfoRow(
+                                    Icons.email, 'Email', userData?['email']),
+                                _buildInfoRow(Icons.login, 'Login Type',
+                                    userData?['loginType']),
+                                _buildEditableRow(Icons.account_box, 'Account Type',
+                                  accType),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEditableRow(
+      IconData icon, String title, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueAccent.shade400),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                isEditing
+                    ? TextField(
+                        controller: controller,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                      )
+                    : Text(
+                        controller.text,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String title, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueAccent.shade400),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                Text(
+                  value ?? 'N/A',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

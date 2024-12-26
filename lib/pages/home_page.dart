@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   final List<Widget> _pages = [
     const HomePageContent(), // Card-based content for Home Page
-    const InfoPage(),
+    const InfoScreen(),
     const ProfilePage(),
   ];
 
@@ -44,7 +44,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _currentIndex = index;
     });
-
   }
 
   @override
@@ -62,13 +61,13 @@ class _HomePageState extends State<HomePage> {
             ),
             label: 'Home',
           ),
-            const BottomNavigationBarItem(
-              icon: Icon(
-                Icons.info,
-                size: 32,
-              ),
-              label: 'Info',
+          const BottomNavigationBarItem(
+            icon: Icon(
+              Icons.info,
+              size: 32,
             ),
+            label: 'Info',
+          ),
           const BottomNavigationBarItem(
             icon: Icon(
               Icons.person,
@@ -81,9 +80,44 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-class HomePageContent extends StatelessWidget {
+class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
+
+  @override
+  State<HomePageContent> createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<HomePageContent> {
+  String? fullName; // Holds the full name of the user
+  bool isLoading = true;
+  _User.User? usr;
+  @override
+  void initState() {
+    super.initState();
+    fetchUserDetails();
+  }
+
+  void fetchUserDetails() async {
+    String? uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      _User.UserService us = _User.UserService();
+      usr = await us.fetchUserByUID(uid);
+
+      if (usr != null) {
+        setState(() {
+          // Concatenate firstName, middleName, and lastName
+          fullName = [
+            usr?.firstname,
+            usr?.middlename,
+            usr?.lastname,
+          ].where((name) => name != null && name.isNotEmpty).join(' ');
+        });
+      }
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,14 +144,13 @@ class HomePageContent extends StatelessWidget {
                                     FirebaseAuth
                                         .instance.currentUser!.photoURL!,
                                     fit: BoxFit.cover,
-                                    width:
-                                        36, // Match twice the inner CircleAvatar radius
+                                    width: 36,
                                     height: 36,
                                   ),
                                 )
                               : const Icon(
                                   Icons.person,
-                                  size: 24, // Adjust the size to fit nicely
+                                  size: 24,
                                 ),
                           radius: 18,
                         ),
@@ -139,18 +172,25 @@ class HomePageContent extends StatelessWidget {
                             constraints: BoxConstraints(
                                 maxWidth:
                                     MediaQuery.of(context).size.width * 0.6),
-                            child: Text(
-                              FirebaseAuth.instance.currentUser?.displayName ??
-                                  "User",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow
-                                  .ellipsis, // Ensures text is truncated
-                            ),
+                            child: isLoading
+                                ? const Text(
+                                    "Loading...",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : Text(
+                                    fullName ?? "User",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                           ),
                         ],
                       ),
@@ -219,8 +259,11 @@ class HomePageContent extends StatelessWidget {
                             return const RaiseComplaints();
                           }));
                         },
-                        child: _buildCategoryCard('Add Complaint',
-                            'Raise an issue', Icons.add, Colors.deepPurple),
+                        child:Visibility(
+                          visible: (usr?.accountType == "student" || usr?.accountType == "mr"),
+                          child:  _buildCategoryCard('Add Complaint',
+                              'Raise an issue', Icons.add, Colors.deepPurple),
+                        ),
                       ),
                     ],
                   ),
