@@ -12,22 +12,23 @@ class GoogleSignInProvider extends ChangeNotifier {
 
   void emailLogin(String email, String password) async {
     try {
-      final credential = await FirebaseAuth.instance
+      await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-          
-          Fluttertoast.showToast(
-            msg: "Logged In Successfully",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-          );
+
+      Fluttertoast.showToast(
+        msg: "Logged In Successfully",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
         // Check for specific passwords and create the account.
         if (password == 'mcom123' || password == 'mcor123') {
           try {
             // Create a new Firebase user.
             final newCredential = await FirebaseAuth.instance
-                .createUserWithEmailAndPassword(email: email, password: password);
+                .createUserWithEmailAndPassword(
+                    email: email, password: password);
 
             final userId = newCredential.user?.uid ?? "";
 
@@ -37,16 +38,15 @@ class GoogleSignInProvider extends ChangeNotifier {
             // Create the user object using _User.User and the UserService.
             final _User.UserService userService = _User.UserService();
             final _User.User user = _User.User.createUser(
-              accountType: accountType,
-              email: email,
-              firstname: "Complete", // Replace with actual data if available.
-              middlename: "Your", // Replace with actual data if available.
-              lastname: "Profile", // Replace with actual data if available.
-              loginType: "email",
-              userId: userId,
-              mess:"DH",
-              mobileno:"1231231321"
-            );
+                accountType: accountType,
+                email: email,
+                firstname: "Complete", // Replace with actual data if available.
+                middlename: "Your", // Replace with actual data if available.
+                lastname: "Profile", // Replace with actual data if available.
+                loginType: "email",
+                userId: userId,
+                mess: "DH",
+                mobileno: "1231231321");
 
             // Save the user object to the database using the UserService.
             await userService.createUser(user);

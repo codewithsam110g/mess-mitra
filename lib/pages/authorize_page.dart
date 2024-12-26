@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mess_mate/auth/auth.dart';
+import 'package:flutter/services.dart';
 
 class Authorizepage extends StatefulWidget {
   const Authorizepage({super.key});
@@ -9,7 +10,6 @@ class Authorizepage extends StatefulWidget {
 }
 
 class _AuthorizepageState extends State<Authorizepage> {
-  
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -20,7 +20,7 @@ class _AuthorizepageState extends State<Authorizepage> {
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -57,7 +57,9 @@ class _AuthorizepageState extends State<Authorizepage> {
                               radius: 80,
                               child: Image.asset('assets/logo.png'),
                             ),
-                            SizedBox(height: 60,),
+                            SizedBox(
+                              height: 60,
+                            ),
                             Container(
                               padding: EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -108,19 +110,24 @@ class _AuthorizepageState extends State<Authorizepage> {
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Color(0xFF6B5BD2),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                         ),
                                         onPressed: () {
                                           String email = _emailController.text;
-                                          String password = _passwordController.text;
-                  
-                                          GoogleSignInProvider().emailLogin(email, password);
+                                          String password =
+                                              _passwordController.text;
+
+                                          GoogleSignInProvider()
+                                              .emailLogin(email, password);
                                           Navigator.of(context).pop();
                                         },
                                         child: Text(
                                           'Login',
-                                          style: TextStyle(color: Colors.white, fontSize: 16),
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16),
                                         ),
                                       ),
                                     ),
@@ -153,7 +160,6 @@ class _AuthorizepageState extends State<Authorizepage> {
             ),
           ),
         ),
-        
       ],
     );
   }

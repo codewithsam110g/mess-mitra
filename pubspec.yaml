@@ -34,6 +34,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.png
+  fonts:
+    - family: SalmaPro
+      fonts:
+        - asset: assets/SalmaproMedium.otf
 
 flutter_icons:
   android: true

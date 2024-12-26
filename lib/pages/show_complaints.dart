@@ -85,15 +85,13 @@ class _ShowComplaintState extends State<ShowComplaint> {
 
   void _checkSupportStatus() {
     // Check if the current user has already supported this complaint
-    if (currentUser!.complaintIds.contains(widget.complaint.complaintId)) {
+    if (currentUser!.complaintIds.contains(widget.complaint.complaintId) || currentUser!.accountType == "mcor" || currentUser!.accountType == "mcom") {
       setState(() {
-        isSupportDisabled =
-            true; // Disable the support button if already supported
+        isSupportDisabled = true;
       });
     } else {
       setState(() {
-        isSupportDisabled =
-            false; // Enable support button if not already supported
+        isSupportDisabled = false;
       });
     }
   }
@@ -116,7 +114,8 @@ class _ShowComplaintState extends State<ShowComplaint> {
         buttonText = "Change Status";
       });
     } else if ((widget.complaint.status == 2 || widget.complaint.status == 3) &&
-        widget.complaint.raisedBy == currentUserUid) {
+        (widget.complaint.raisedBy == currentUserUid) &&
+        (!widget.complaint.isReRaised)) {
       setState(() {
         mode = 2;
         buttonText = "Re Raise";
@@ -240,13 +239,13 @@ class _ShowComplaintState extends State<ShowComplaint> {
     ).then((result) {
       if (result != null) {
         setState(() {
-          if(widget.complaint.isReRaised){
+          if (widget.complaint.isReRaised) {
             widget.complaint.status = result['status'];
             widget.complaint.recloseReason = result['reason'];
             Complaint.updateComplaint(
                 widget.complaint.complaintId, widget.complaint.toMap());
             setMode();
-          }else{
+          } else {
             widget.complaint.status = result['status'];
             widget.complaint.reason = result['reason'];
             Complaint.updateComplaint(
@@ -429,48 +428,54 @@ class _ShowComplaintState extends State<ShowComplaint> {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      widget.complaint.title,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
+                                    SizedBox(
+                                      width: 400,
+                                      child: Text(
+                                        widget.complaint.title,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                        overflow: TextOverflow
+                                            .ellipsis, // Handle long titles gracefully
                                       ),
-                                      overflow: TextOverflow
-                                          .ellipsis, // Handle long titles gracefully
                                     ),
                                   ],
                                 ),
                               ),
                               Row(
                                 children: [
-                                  ElevatedButton(
-                                    onPressed: isSupportDisabled
-                                        ? null
-                                        : () {
-                                            _handleSupportAction();
-                                          },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isSupportDisabled
-                                          ? Colors.grey // Use a disabled color
-                                          : Colors
-                                              .blueAccent, // Customize button color
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            12), // Slightly rounded corners
+                                  if (!isSupportDisabled) ...[
+                                    ElevatedButton(
+                                      onPressed: isSupportDisabled
+                                          ? null
+                                          : () {
+                                              _handleSupportAction();
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isSupportDisabled
+                                            ? Colors
+                                                .grey // Use a disabled color
+                                            : Colors
+                                                .blueAccent, // Customize button color
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              12), // Slightly rounded corners
+                                        ),
+                                      ),
+                                      child: Text(
+                                        isSupportDisabled
+                                            ? 'Already Supported'
+                                            : 'Support',
+                                        style: const TextStyle(
+                                            color: Colors.white),
                                       ),
                                     ),
-                                    child: Text(
-                                      isSupportDisabled
-                                          ? 'Already Supported'
-                                          : 'Support',
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
+                                    const SizedBox(width: 12),
+                                  ],
                                   Row(
                                     children: [
                                       const Icon(Icons.person,
@@ -497,14 +502,12 @@ class _ShowComplaintState extends State<ShowComplaint> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                child: Text(
-                                  '#${widget.complaint.complaintId}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                  overflow: TextOverflow.ellipsis
-                                ),
+                                child: Text('#${widget.complaint.complaintId}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                    overflow: TextOverflow.ellipsis),
                               ),
                               const SizedBox(width: 8),
                               GestureDetector(
@@ -744,7 +747,13 @@ class _ShowComplaintState extends State<ShowComplaint> {
                           if (widget.complaint.isReRaised) ...[
                             const Divider(height: 24, color: Colors.grey),
                             Text(
-                                "This issue is Reraised With Reason:\n${widget.complaint.reRaiseReason}")
+                                "This issue is Re-Raised With Reason:\n${widget.complaint.reRaiseReason}")
+                          ],
+                          if (widget.complaint.recloseReason != "") ...[
+                            const Divider(height: 24, color: Colors.grey),
+                            Text(
+                                "This issue is Re-Closed With Reason:\n${widget.complaint.recloseReason
+                                }")
                           ],
                           if (reassignedUser != null) ...[
                             const SizedBox(height: 8),

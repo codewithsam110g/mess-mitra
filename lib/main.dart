@@ -65,7 +65,7 @@ class MainApp extends StatelessWidget {
           ),
         ),
       ),
-      home: SplashPage(),
+      home: const SplashPage(),
     );
   }
 }

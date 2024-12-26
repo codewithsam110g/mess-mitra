@@ -305,7 +305,7 @@ class _GlobalComplaintsState extends State<GlobalComplaints> {
       case 2:
         return "Solved";
       case 3:
-        return "Rejcted";
+        return "Unsolved";
       case 4:
         return "Re Raised";
       default:

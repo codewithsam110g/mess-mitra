@@ -32,6 +32,35 @@ class _ProfilePageState extends State<ProfilePage> {
     fetchFeedbackUrl();
   }
 
+  void _launchURL(BuildContext context) async {
+    final theme = Theme.of(context);
+    try {
+      await launchUrl(
+        Uri.parse(feedbackUrl??""),
+        customTabsOptions: CustomTabsOptions(
+          colorSchemes: CustomTabsColorSchemes.defaults(
+            toolbarColor: theme.colorScheme.surface,
+          ),
+          shareState: CustomTabsShareState.on,
+          urlBarHidingEnabled: true,
+          showTitle: true,
+          closeButton: CustomTabsCloseButton(
+            icon: CustomTabsCloseButtonIcons.back,
+          ),
+        ),
+        safariVCOptions: SafariViewControllerOptions(
+          preferredBarTintColor: theme.colorScheme.surface,
+          preferredControlTintColor: theme.colorScheme.onSurface,
+          barCollapsingEnabled: true,
+          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
+        ),
+      );
+    } catch (e) {
+      // If the URL launch fails, an exception will be thrown. (For example, if no browser app is installed on the Android device.)
+      debugPrint(e.toString());
+    }
+  }
+
   Future<void> fetchUserData() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
@@ -69,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
       'lastname': lastnameController.text,
       'mess': messController.text,
       'mobileno': mobilenoController.text,
-      'accountType':accType.text
+      'accountType': accType.text
     };
 
     await _dbRef.child('users/$userId/user').update(updatedData);
@@ -187,17 +216,27 @@ class _ProfilePageState extends State<ProfilePage> {
                                     'Middle Name', middlenameController),
                                 _buildEditableRow(Icons.person, 'Last Name',
                                     lastnameController),
-                                _buildEditableRow(Icons.restaurant, 'Mess',
-                                    messController),
+                                _buildEditableRow(
+                                    Icons.restaurant, 'Mess', messController),
                                 _buildEditableRow(Icons.phone, 'Mobile Number',
                                     mobilenoController),
                                 _buildInfoRow(
                                     Icons.email, 'Email', userData?['email']),
                                 _buildInfoRow(Icons.login, 'Login Type',
                                     userData?['loginType']),
-                                _buildEditableRow(Icons.account_box, 'Account Type',
-                                  accType),
+                                _buildEditableRow(
+                                    Icons.account_box, 'Account Type', accType),
                                 const SizedBox(height: 16),
+                                if(userData?["accountType"] == "student" || userData?["accountType"] == "mr")
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        _launchURL(context);
+                                      },
+                                      child: Text("Mess FeedBack"),
+                                    ),
+                                  ),
                               ],
                             ),
                     ),

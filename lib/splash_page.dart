@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mess_mate/page_manager.dart';
 
 class SplashPage extends StatefulWidget {
-  const SplashPage({Key? key}) : super(key: key);
+  const SplashPage({super.key});
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -20,7 +20,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     // Reduced duration for faster icon animation
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 1,milliseconds:500),
     );
 
     _logoPositionAnimation = Tween<double>(begin: 0, end: -50).animate(
@@ -34,7 +34,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     _animationController.forward();
 
     // Increased delay after animation
-    Future.delayed(const Duration(seconds: 6), () {
+    Future.delayed(const Duration(seconds: 2, milliseconds:500), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const PageManager()),
       );
@@ -101,7 +101,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                       tag: 'logo',
                       child: CircleAvatar(
                         backgroundColor: Colors.white,
-                        radius: 100,
+                        radius: 120,
                         child: Image.asset('assets/logo.png'),
                       ),
                     ),
@@ -112,11 +112,13 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                     child: const Text(
                       'Mess Mitra',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF6B5BD2),
-                        decoration: TextDecoration.none
+                        decoration: TextDecoration.none,
+                        fontFamily:'SalmaPro'
                       ),
+
                     ),
                   ),
                 ],

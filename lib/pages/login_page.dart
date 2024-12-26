@@ -11,18 +11,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  @override
-  void initState() {
-    super.initState();
-    // Ensure the status bar allows content underneath it
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent, // Make status bar transparent
-        statusBarIconBrightness: Brightness.dark, // Adjust icon brightness
-      ),
-    );
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -124,7 +113,8 @@ class _LoginPageState extends State<LoginPage> {
                                   },
                                   child: const Text(
                                     'Login as Student',
-                                    style: TextStyle(color: Colors.white, fontSize: 16),
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 16),
                                   ),
                                 ),
                               ),
@@ -133,7 +123,8 @@ class _LoginPageState extends State<LoginPage> {
                                 width: double.infinity,
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFF6B5BD2)),
+                                    side: const BorderSide(
+                                        color: Color(0xFF6B5BD2)),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -141,12 +132,13 @@ class _LoginPageState extends State<LoginPage> {
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (context) => const Authorizepage(),
+                                        builder: (context) =>
+                                            const Authorizepage(),
                                       ),
                                     );
                                   },
                                   child: const Text(
-                                    'Login as Authorizer',
+                                    'Login as Staff',
                                     style: TextStyle(
                                       color: Color(0xFF6B5BD2),
                                       fontWeight: FontWeight.bold,
